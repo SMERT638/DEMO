@@ -1,0 +1,61 @@
+PREROUTING ACCEPT [1035:1038110]  # Разрешить весь трафик в PREROUTING (счётчик: 1035 пакетов, ~1.04 МБ)
+:INPUT ACCEPT [1031:1037950]       # Разрешить весь входящий трафик (1031 пакетов, ~1.04 МБ)
+:FORWARD ACCEPT [0:0]              # Разрешить пересылку (пока не используется)
+:OUTPUT ACCEPT [1001:1032571]      # Разрешить весь исходящий трафик (1001 пакет, ~1.03 МБ)
+:POSTROUTING ACCEPT [1001:1032571] # Разрешить весь трафик после маршрутизации (1001 пакет, ~1.03 МБ)
+COMMIT
+*nat
+:PREROUTING ACCEPT [250:19126]     # Разрешить весь трафик для DNAT (250 пакетов, ~19 КБ)
+:INPUT ACCEPT [212:14401]          # Разрешить входящий трафик (212 пакетов, ~14 КБ)
+:OUTPUT ACCEPT [238:16510]         # Разрешить исходящий трафик (238 пакетов, ~16 КБ)
+:POSTROUTING ACCEPT [238:16510]    # Разрешить трафик для SNAT/MASQUERADE (238 пакетов, ~16 КБ)
+COMMIT
+:INPUT ACCEPT [0:0]                # Политика по умолчанию: ACCEPT (но ниже явные правила DROP)
+:FORWARD ACCEPT [0:0]              # Политика FORWARD: ACCEPT (но ниже есть правила)
+:OUTPUT ACCEPT [1:69]              # Политика OUTPUT: ACCEPT (1 пакет, 69 байт)
+-A INPUT -f -j DROP                # Блокировать фрагментированные пакеты (защита от атак)
+-A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT  # Разрешить ответы на установленные соединения
+-A INPUT -i ens33 -p tcp --dport 8080 -j ACCEPT  # Разрешить HTTP-прокси (Squid) на порту 8080
+-A INPUT -i ens33 -p tcp --dport 3128 -j ACCEPT  # Разрешить HTTP-прокси (Squid) на порту 3128
+-A INPUT -i ens33 -p udp --dport 3128 -j ACCEPT  # Разрешить UDP-прокси на порту 3128 (редко используется)
+-A INPUT -i ens33 -p tcp --dport 53 -j ACCEPT    # Разрешить DNS (TCP)
+-A INPUT -i ens33 -p udp --dport 123 -j ACCEPT   # Разрешить NTP (синхронизация времени)
+-A INPUT -i ens33 -p udp --dport 53 -j ACCEPT    # Разрешить DNS (UDP)
+-A INPUT -i ens33 -p tcp --dport 20 -j ACCEPT    # Разрешить FTP (data port)
+-A INPUT -i ens33 -p udp --dport 20 -j ACCEPT    # Разрешить FTP (data port, UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 21 -j ACCEPT    # Разрешить FTP (control port)
+-A INPUT -i ens33 -p udp --dport 21 -j ACCEPT    # Разрешить FTP (control port, UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 389 -j ACCEPT   # Разрешить LDAP (TCP)
+-A INPUT -i ens33 -p tcp --dport 636 -j ACCEPT   # Разрешить LDAPS (защищённый LDAP)
+-A INPUT -i ens33 -p tcp --dport 135 -j ACCEPT   # Разрешить Microsoft RPC (TCP)
+-A INPUT -i ens33 -p tcp --dport 137 -j ACCEPT   # Разрешить NetBIOS (TCP)
+-A INPUT -i ens33 -p udp --dport 137 -j ACCEPT   # Разрешить NetBIOS (UDP)
+-A INPUT -i ens33 -p tcp --dport 138 -j ACCEPT   # Разрешить NetBIOS (TCP, редко)
+-A INPUT -i ens33 -p udp --dport 138 -j ACCEPT   # Разрешить NetBIOS (UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 139 -j ACCEPT   # Разрешить NetBIOS (TCP)
+-A INPUT -i ens33 -p udp --dport 139 -j ACCEPT   # Разрешить NetBIOS (UDP)
+-A INPUT -i ens33 -p tcp --dport 445 -j ACCEPT   # Разрешить SMB (Windows file sharing)
+-A INPUT -i ens33 -p udp --dport 445 -j ACCEPT   # Разрешить SMB (UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 161 -j ACCEPT   # Разрешить SNMP (TCP)
+-A INPUT -i ens33 -p udp --dport 161 -j ACCEPT   # Разрешить SNMP (UDP)
+-A INPUT -i ens33 -p udp --dport 162 -j ACCEPT   # Разрешить SNMP Trap (UDP)
+-A INPUT -i ens33 -p tcp --dport 22 -j ACCEPT    # Разрешить SSH (TCP)
+-A INPUT -i ens33 -p udp --dport 22 -j ACCEPT    # Разрешить SSH (UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 80 -j ACCEPT    # Разрешить HTTP (TCP)
+-A INPUT -i ens33 -p udp --dport 80 -j ACCEPT    # Разрешить HTTP (UDP, редко)
+-A INPUT -i ens33 -p tcp --dport 443 -j ACCEPT   # Разрешить HTTPS (TCP)
+-A INPUT -i ens33 -p udp --dport 443 -j ACCEPT   # Разрешить HTTPS (UDP, редко)
+-A INPUT -i ens33 -p icmp -j ACCEPT              # Разрешить ping (ICMP)
+-A INPUT -i ens33 -p tcp --dport 9100 -j ACCEPT  # Разрешить Prometheus Node Exporter
+-A INPUT -i ens33 -p tcp --dport 9090 -j ACCEPT  # Разрешить Prometheus Server
+-A INPUT -i ens33 -p tcp --dport 3000 -j ACCEPT  # Разрешить
+20:57
+
+
+Grafana/Dashboards
+-A INPUT -i ens33 -p tcp --dport 88 -j ACCEPT    # Разрешить Kerberos (TCP)
+-A INPUT -i ens33 -p udp --dport 88 -j ACCEPT    # Разрешить Kerberos (UDP)
+-A INPUT -i ens33 -p udp --dport 135 -j ACCEPT   # Разрешить Microsoft RPC (UDP)
+-A INPUT -p tcp --dport 50000:51000 -j ACCEPT    # Разрешить динамические порты для RPC
+-A INPUT -p udp --dport 50000:51000 -j ACCEPT    # Разрешить динамические порты для RPC 
+-A INPUT -i ens33 -j DROP                        # Блокировать весь остальной трафик на ens33
